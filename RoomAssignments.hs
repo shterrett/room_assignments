@@ -54,6 +54,13 @@ isAvailable (Just elist) e = all (not . eventOverlaps e) elist
 scheduledEvents :: Schedule -> Room -> Maybe EventList
 scheduledEvents schedule room = Map.lookup room schedule
 
+scheduleEvent :: Schedule -> Room -> Event -> Schedule
+scheduleEvent schedule room event =
+    let existingEvents = scheduledEvents schedule room in
+      insert room (addEvent event existingEvents) schedule
+      where addEvent e Nothing = [e]
+            addEvent e (Just es) = e:es
+
 eventOverlaps :: Event -> Event -> Bool
 eventOverlaps e1 e2 = within e2 (startTime e1) || within e2 (endTime e1)
     where within event time = time >= (startTime event) && time <= (endTime event)
