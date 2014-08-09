@@ -31,15 +31,15 @@ eventOrdTests =
         ten = Time 10 0
         eleven = Time 11 0
     in [ testCase "GT when start time is later" $
-         GT @=? compare (Event ten eleven Standard 10) (Event nine eleven Standard 10)
+         GT @=? compare (Event "e" ten eleven Standard 10) (Event "e" nine eleven Standard 10)
        , testCase "LT when start time is earlier" $
-         LT @=? compare (Event nine ten Standard 10) (Event ten eleven Standard 10)
+         LT @=? compare (Event "e" nine ten Standard 10) (Event "e" ten eleven Standard 10)
        , testCase "LT when start times same and attending is lower" $
-         LT @=? compare (Event nine ten Standard 10) (Event nine ten Standard 20)
+         LT @=? compare (Event "e" nine ten Standard 10) (Event "e" nine ten Standard 20)
        , testCase "GT when start times same and attending higher" $
-         GT @=? compare (Event nine ten Standard 20) (Event nine ten Standard 10)
+         GT @=? compare (Event "e" nine ten Standard 20) (Event "e" nine ten Standard 10)
        , testCase "EQ when start times and attending same" $
-         EQ @=? compare (Event nine ten Standard 10) (Event nine eleven Standard 10)
+         EQ @=? compare (Event "e" nine ten Standard 10) (Event "e" nine eleven Standard 10)
        ]
 
 
@@ -47,9 +47,9 @@ isCompatibleTests :: [Test]
 isCompatibleTests =
     let start = Time 8 30
         end = Time 10 0
-    in let smallEvent = Event start end Standard 15
-           bigEvent = Event start end Standard 55
-           specialEvent = Event start end Science 15
+    in let smallEvent = Event "small" start end Standard 15
+           bigEvent = Event "big" start end Standard 55
+           specialEvent = Event "special" start end Science 15
            standardRoom = Room "small" 20 Standard
            specialRoom = Room "science" 20 Science
        in [ testCase "standard room with enough seats is compatible" $
@@ -68,11 +68,11 @@ eventOverlapsTests =
         eleven = Time 11 0
         ten = Time 10 0
         twelve = Time 12 0
-    in let firstHour = Event nine ten Standard 10
-           secondHour = Event ten eleven Standard 10
-           firstHalf = Event nine eleven Standard 10
-           secondHalf = Event ten twelve Standard 10
-           fullTime = Event nine twelve Standard 10
+    in let firstHour = Event "first" nine ten Standard 10
+           secondHour = Event "second" ten eleven Standard 10
+           firstHalf = Event "fhalf" nine eleven Standard 10
+           secondHalf = Event "shalf" ten twelve Standard 10
+           fullTime = Event "full" nine twelve Standard 10
        in [ testCase "starts and ends before" $
             False @=? eventOverlaps firstHour secondHour
           , testCase "starts and ends after" $
@@ -94,12 +94,12 @@ isAvailableTests =
         eleven = Time 11 0
         ten = Time 10 0
         twelve = Time 12 0
-    in let firstHour = Event nine ten Standard 10
-           secondHour = Event ten eleven Standard 10
-           thirdHour = Event eleven twelve Standard 10
-           firstHalf = Event nine eleven Standard 10
-           secondHalf = Event ten twelve Standard 10
-           fullTime = Event nine twelve Standard 10
+    in let firstHour = Event "first" nine ten Standard 10
+           secondHour = Event "second" ten eleven Standard 10
+           thirdHour = Event "third" eleven twelve Standard 10
+           firstHalf = Event "fhalf" nine eleven Standard 10
+           secondHalf = Event "shalf" ten twelve Standard 10
+           fullTime = Event "full" nine twelve Standard 10
        in [ testCase "available when no scheduled events" $
             True @=? isAvailable Nothing firstHour
           , testCase "available when after scheduled event" $
@@ -127,8 +127,8 @@ scheduledEventsTests =
     let one = Time 13 0
         two = Time 14 0
         three = Time 15 0
-    in let eventOne = Event one two Standard 10
-           eventTwo = Event two three Standard 10
+    in let eventOne = Event "one" one two Standard 10
+           eventTwo = Event "two" two three Standard 10
            roomOne = Room "one" 15 Standard
            roomTwo = Room "two" 15 Standard
            schedule = Map.fromList [(roomOne, [eventOne, eventTwo])]
@@ -143,9 +143,9 @@ scheduleEventTests =
     let one = Time 13 0
         two = Time 14 0
         three = Time 15 0
-    in let eventOne = Event one two Standard 10
-           eventTwo = Event two three Standard 10
-           eventThree = Event one three Standard 10
+    in let eventOne = Event "one" one two Standard 10
+           eventTwo = Event "two" two three Standard 10
+           eventThree = Event "three" one three Standard 10
            roomOne = Room "one" 15 Standard
            roomTwo = Room "two" 15 Standard
            roomThree = Room "three" 15 Standard

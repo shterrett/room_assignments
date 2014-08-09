@@ -33,6 +33,7 @@ instance Ord Time where
         | otherwise = LT
 
 data Event = Event {
+           name         :: String,
            startTime    :: Time,
            endTime      :: Time,
            requiredType :: RoomType,
