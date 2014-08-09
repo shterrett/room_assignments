@@ -11,6 +11,38 @@ exitProperly m = do
 testCase :: String -> Assertion -> Test
 testCase label assertion = TestLabel label (TestCase assertion)
 
+timeOrdTests :: [Test]
+timeOrdTests =
+    [ testCase "GT when hour is later" $
+      GT @=? compare (Time 10 5) (Time 9 10)
+    , testCase "LT when hour is earlier" $
+      LT @=? compare (Time 9 10) (Time 10 5)
+    , testCase "GT when hours equal and minutes later" $
+      GT @=? compare (Time 9 10) (Time 9 5)
+    , testCase "LT when hours equal and minutes earlier" $
+      LT @=? compare (Time 9 5) (Time 9 10)
+    , testCase "EQ when hours and minutes equal" $
+      EQ @=? compare (Time 9 8) (Time 9 8)
+    ]
+
+eventOrdTests :: [Test]
+eventOrdTests =
+    let nine = Time 9 0
+        ten = Time 10 0
+        eleven = Time 11 0
+    in [ testCase "GT when start time is later" $
+         GT @=? compare (Event ten eleven Standard 10) (Event nine eleven Standard 10)
+       , testCase "LT when start time is earlier" $
+         LT @=? compare (Event nine ten Standard 10) (Event ten eleven Standard 10)
+       , testCase "LT when start times same and attending is lower" $
+         LT @=? compare (Event nine ten Standard 10) (Event nine ten Standard 20)
+       , testCase "GT when start times same and attending higher" $
+         GT @=? compare (Event nine ten Standard 20) (Event nine ten Standard 10)
+       , testCase "EQ when start times and attending same" $
+         EQ @=? compare (Event nine ten Standard 10) (Event nine eleven Standard 10)
+       ]
+
+
 isCompatibleTests :: [Test]
 isCompatibleTests =
     let start = Time 8 30
@@ -130,7 +162,9 @@ scheduleEventTests =
           ]
 
 allTests :: [Test]
-allTests = isCompatibleTests ++
+allTests = timeOrdTests ++
+           eventOrdTests ++
+           isCompatibleTests ++
            eventOverlapsTests ++
            isAvailableTests ++
            scheduledEventsTests ++

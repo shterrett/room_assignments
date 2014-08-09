@@ -39,6 +39,13 @@ data Event = Event {
            attending    :: Integer
            } deriving (Eq, Show)
 
+instance Ord Event where
+    compare e1 e2
+        | startTime e1 > startTime e2 = GT
+        | startTime e1 < startTime e2 = LT
+        | startTime e1 == startTime e2 = compare (attending e1) (attending e2)
+        | otherwise = LT
+
 type EventList = [Event]
 
 type Schedule = Map Room [Event]
