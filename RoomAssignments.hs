@@ -30,6 +30,7 @@ instance Ord Time where
         | hour t1 > hour t2 = GT
         | hour t1 < hour t2 = LT
         | hour t1 == hour t2 = compare (minute t1) (minute t2)
+        | otherwise = LT
 
 data Event = Event {
            startTime    :: Time,
@@ -44,11 +45,11 @@ type Schedule = Map Room [Event]
 
 isCompatible :: Event -> Room -> Bool
 isCompatible event room = enoughSeats event room && rightType event room
-    where enoughSeats event room = attending event <= seats room
-          rightType event room = requiredType event == roomType room
+    where enoughSeats e r = attending e <= seats r
+          rightType e r = requiredType e == roomType r
 
 isAvailable :: Maybe EventList -> Event -> Bool
-isAvailabe Nothing _ = True
+isAvailable Nothing _ = True
 isAvailable (Just elist) e = all (not . eventOverlaps e) elist
 
 scheduledEvents :: Schedule -> Room -> Maybe EventList
@@ -57,10 +58,14 @@ scheduledEvents schedule room = Map.lookup room schedule
 scheduleEvent :: Schedule -> Room -> Event -> Schedule
 scheduleEvent schedule room event =
     let existingEvents = scheduledEvents schedule room in
-      insert room (addEvent event existingEvents) schedule
+      Map.insert room (addEvent event existingEvents) schedule
       where addEvent e Nothing = [e]
             addEvent e (Just es) = e:es
 
 eventOverlaps :: Event -> Event -> Bool
-eventOverlaps e1 e2 = within e2 (startTime e1) || within e2 (endTime e1)
-    where within event time = time >= (startTime event) && time <= (endTime event)
+eventOverlaps eventOne eventTwo = beginsDuring eventOne eventTwo ||
+                                  endsDuring eventOne eventTwo ||
+                                  encompasses eventOne eventTwo
+    where beginsDuring e1 e2 = startTime e1 >= startTime e2 && startTime e1 < endTime e2
+          endsDuring e1 e2 = endTime e1 > startTime e2 && endTime e1 <= endTime e2
+          encompasses e1 e2 = startTime e1 < startTime e2 && endTime e1 > endTime e2
