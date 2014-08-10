@@ -1,6 +1,7 @@
 module RoomAssignments where
 
 import Data.Map as Map
+import Data.List as List
 
 data RoomType = Standard | Science
               deriving (Eq, Show)
@@ -50,6 +51,9 @@ instance Ord Event where
 type EventList = [Event]
 
 type Schedule = Map Room [Event]
+
+sortEventList :: EventList -> EventList
+sortEventList = List.sort
 
 isCompatible :: Event -> Room -> Bool
 isCompatible event room = enoughSeats event room && rightType event room

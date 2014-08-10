@@ -42,6 +42,20 @@ eventOrdTests =
          EQ @=? compare (Event "e" nine ten Standard 10) (Event "e" nine eleven Standard 10)
        ]
 
+sortEventListTests :: [Test]
+sortEventListTests =
+    let nine = Time 9 0
+        ten = Time 10 0
+        eleven = Time 11 0
+        twelve = Time 12 0
+    in let third = Event "ten-big" ten twelve Standard 15
+           second = Event "ten" ten eleven Standard 10
+           fourth = Event "eleven" eleven twelve Standard 10
+           first = Event "nine" nine ten Standard 10
+       in [ testCase "sorts by time and attending" $
+            [first, second, third, fourth] @=? sortEventList [third, second, fourth, first]
+          ]
+
 
 isCompatibleTests :: [Test]
 isCompatibleTests =
