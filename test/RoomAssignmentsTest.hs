@@ -175,6 +175,30 @@ scheduleEventTests =
             (Just [eventThree, eventOne, eventTwo]) @=? testResults schedule roomOne eventThree
           ]
 
+bestRoomTests :: [Test]
+bestRoomTests =
+    let one = Time 13 0
+        two = Time 14 0
+    in let stdEvent = Event "std" one two Standard 20
+           sciEvent = Event "sci" one two Science 20
+           tooBigEvent = Event "big" one two Standard 100
+           roomOne = Room "toosmall" 15 Standard
+           roomTwo = Room "scismall" 15 Science
+           roomThree = Room "toobig" 30 Standard
+           roomFour = Room "scibig" 30 Science
+           roomFive = Room "justright" 25 Standard
+           roomSix = Room "sciright" 25 Science
+           roomList = Just [roomOne, roomTwo, roomThree, roomFour, roomFive, roomSix]
+       in [ testCase "selects smallest compatible room with features" $
+            Just roomSix @=? bestRoom sciEvent roomList
+          , testCase "selects smallest compatible room without features" $
+            Just roomFive @=? bestRoom stdEvent roomList
+          , testCase "returns Nothing if no rooms" $
+            Nothing @=? bestRoom tooBigEvent roomList
+          , testCase "returns Nothing if rooms list is empty" $
+            Nothing @=? bestRoom stdEvent (Just [])
+          ]
+
 allTests :: [Test]
 allTests = timeOrdTests ++
            eventOrdTests ++
@@ -182,7 +206,8 @@ allTests = timeOrdTests ++
            eventOverlapsTests ++
            isAvailableTests ++
            scheduledEventsTests ++
-           scheduleEventTests
+           scheduleEventTests ++
+           bestRoomTests
 
 main :: IO ()
 main = exitProperly (runTestTT (TestList allTests))

@@ -81,3 +81,10 @@ eventOverlaps eventOne eventTwo = beginsDuring eventOne eventTwo ||
     where beginsDuring e1 e2 = startTime e1 >= startTime e2 && startTime e1 < endTime e2
           endsDuring e1 e2 = endTime e1 > startTime e2 && endTime e1 <= endTime e2
           encompasses e1 e2 = startTime e1 < startTime e2 && endTime e1 > endTime e2
+
+bestRoom :: Event -> Maybe RoomList -> Maybe Room
+bestRoom _ Nothing = Nothing
+bestRoom e (Just rs) = smallest $ List.filter (isCompatible e) rs
+    where smallest :: [Room] -> Maybe Room
+          smallest [] = Nothing
+          smallest rms = Just (List.minimumBy (\r1 r2 -> seats r1 `compare` seats r2) rms)
