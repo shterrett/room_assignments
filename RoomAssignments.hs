@@ -52,13 +52,26 @@ type EventList = [Event]
 
 type Schedule = Map Room [Event]
 
+scheduleRoomsForEvents :: EventList -> RoomList -> Schedule
+scheduleRoomsForEvents _ [] = Map.empty
+scheduleRoomsForEvents [] _ = Map.empty
+scheduleRoomsForEvents es rs = List.foldl scheduleRoomFor Map.empty es
+    where scheduleRoomFor s e = scheduleEvent s (bestRoom e (availableRooms s e rs)) e
+
 sortEventList :: EventList -> EventList
 sortEventList = List.sort
 
-isCompatible :: Event -> Room -> Bool
-isCompatible event room = enoughSeats event room && rightType event room
-    where enoughSeats e r = attending e <= seats r
-          rightType e r = requiredType e == roomType r
+scheduleEvent :: Schedule -> Maybe Room -> Event -> Schedule
+scheduleEvent s Nothing _ = s
+scheduleEvent schedule (Just room) event =
+    let existingEvents = scheduledEvents schedule room in
+      Map.insert room (addEvent event existingEvents) schedule
+      where addEvent e Nothing = [e]
+            addEvent e (Just es) = e:es
+
+availableRooms :: Schedule -> Event -> RoomList -> RoomList
+availableRooms _ _ [] = []
+availableRooms s e rs = List.filter (\r -> isAvailable (scheduledEvents s r) e) rs
 
 isAvailable :: Maybe EventList -> Event -> Bool
 isAvailable Nothing _ = True
@@ -66,13 +79,6 @@ isAvailable (Just elist) e = all (not . eventOverlaps e) elist
 
 scheduledEvents :: Schedule -> Room -> Maybe EventList
 scheduledEvents schedule room = Map.lookup room schedule
-
-scheduleEvent :: Schedule -> Room -> Event -> Schedule
-scheduleEvent schedule room event =
-    let existingEvents = scheduledEvents schedule room in
-      Map.insert room (addEvent event existingEvents) schedule
-      where addEvent e Nothing = [e]
-            addEvent e (Just es) = e:es
 
 eventOverlaps :: Event -> Event -> Bool
 eventOverlaps eventOne eventTwo = beginsDuring eventOne eventTwo ||
@@ -82,9 +88,14 @@ eventOverlaps eventOne eventTwo = beginsDuring eventOne eventTwo ||
           endsDuring e1 e2 = endTime e1 > startTime e2 && endTime e1 <= endTime e2
           encompasses e1 e2 = startTime e1 < startTime e2 && endTime e1 > endTime e2
 
-bestRoom :: Event -> Maybe RoomList -> Maybe Room
-bestRoom _ Nothing = Nothing
-bestRoom e (Just rs) = smallest $ List.filter (isCompatible e) rs
+bestRoom :: Event -> RoomList -> Maybe Room
+bestRoom _ [] = Nothing
+bestRoom e rs = smallest $ List.filter (isCompatible e) rs
     where smallest :: [Room] -> Maybe Room
           smallest [] = Nothing
           smallest rms = Just (List.minimumBy (\r1 r2 -> seats r1 `compare` seats r2) rms)
+
+isCompatible :: Event -> Room -> Bool
+isCompatible event room = enoughSeats event room && rightType event room
+    where enoughSeats e r = attending e <= seats r
+          rightType e r = requiredType e == roomType r

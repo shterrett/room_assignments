@@ -166,7 +166,7 @@ scheduleEventTests =
            schedule = Map.fromList [(roomOne, [eventOne, eventTwo]),
                                     (roomTwo, [eventThree])
                                    ]
-           testResults s r e = scheduledEvents (scheduleEvent s r e) r
+           testResults s r e = scheduledEvents (scheduleEvent s (Just r) e) r
        in [ testCase "adds event to existing list" $
             (Just [eventOne, eventThree]) @=? testResults schedule roomTwo eventOne
           , testCase "adds room and event when not yet in schedule" $
@@ -188,7 +188,7 @@ bestRoomTests =
            roomFour = Room "scibig" 30 Science
            roomFive = Room "justright" 25 Standard
            roomSix = Room "sciright" 25 Science
-           roomList = Just [roomOne, roomTwo, roomThree, roomFour, roomFive, roomSix]
+           roomList = [roomOne, roomTwo, roomThree, roomFour, roomFive, roomSix]
        in [ testCase "selects smallest compatible room with features" $
             Just roomSix @=? bestRoom sciEvent roomList
           , testCase "selects smallest compatible room without features" $
@@ -196,7 +196,49 @@ bestRoomTests =
           , testCase "returns Nothing if no rooms" $
             Nothing @=? bestRoom tooBigEvent roomList
           , testCase "returns Nothing if rooms list is empty" $
-            Nothing @=? bestRoom stdEvent (Just [])
+            Nothing @=? bestRoom stdEvent []
+          ]
+
+availableRoomsTests :: [Test]
+availableRoomsTests =
+    let one = Time 13 0
+        two = Time 14 0
+        three = Time 15 0
+    in let e1 = Event "1" one two Standard 20
+           e2 = Event "2" two three Standard 20
+           r1 = Room "1" 25 Standard
+           r2 = Room "2" 25 Standard
+           r3 = Room "3" 25 Standard
+           schedule = Map.fromList [(r1, [e1, e2]),
+                                    (r2, [e1])
+                                   ]
+       in [ testCase "returns rooms that do not have a conflicting event scheduled" $
+            [r3] @=? availableRooms schedule e1 [r1, r2, r3]
+          , testCase "returns rooms that do not have a conflicting event scheduled" $
+            [r2, r3] @=? availableRooms schedule e2 [r1, r2, r3]
+          ]
+
+scheduleRoomsForEventsTests :: [Test]
+scheduleRoomsForEventsTests =
+    let one = Time 13 0
+        two = Time 14 0
+        three = Time 15 0
+    in let e1 = Event "1" one two Standard 20
+           e2 = Event "2" two three Standard 20
+           e3 = Event "3" two three Standard 30
+           e4 = Event "4" one two Science 20
+           r1 = Room "1" 25 Standard
+           r2 = Room "2" 25 Standard
+           r3 = Room "3" 35 Standard
+           r4 = Room "4" 35 Science
+       in [ testCase "assigns a single room to a single event" $
+            Map.fromList [(r1, [e1])] @=? scheduleRoomsForEvents [e1] [r1]
+          , testCase "assigns exclusive rooms to events" $
+            Map.fromList[(r1, [e1]), (r3, [e3])] @=? scheduleRoomsForEvents [e1, e3] [r1, r3]
+          , testCase "assigns rooms to events" $
+            Map.fromList [(r1, [e2, e1]), (r3, [e3])] @=? scheduleRoomsForEvents[e3, e1, e2] [r1, r2, r3]
+          , testCase "assigns rooms to events with special types" $
+            Map.fromList [(r1, [e2, e1]), (r3, [e3]), (r4, [e4])] @=? scheduleRoomsForEvents[e3, e1, e2, e4] [r4, r1, r2, r3]
           ]
 
 allTests :: [Test]
@@ -207,7 +249,9 @@ allTests = timeOrdTests ++
            isAvailableTests ++
            scheduledEventsTests ++
            scheduleEventTests ++
-           bestRoomTests
+           bestRoomTests ++
+           availableRoomsTests ++
+           scheduleRoomsForEventsTests
 
 main :: IO ()
 main = exitProperly (runTestTT (TestList allTests))
