@@ -30,10 +30,20 @@ instance FromField RoomType where
       | str == "Science" = pure Science
       | otherwise = empty
 
+instance FromNamedRecord Room where
+    parseNamedRecord r = Room <$> r .: "roomId" <*>
+                                  r .: "seats" <*>
+                                  r .: "roomType"
+
 main :: IO ()
 main = do
-    csvData <- BL.readFile "./test/events.csv"
-    case decodeByName csvData of
+    eventData <- BL.readFile "./test/events.csv"
+    case decodeByName eventData of
       Left err -> putStrLn err
       Right (_, v) -> V.forM_ v $ \ ev ->
         putStrLn (name ev)
+    roomData <- BL.readFile "./test/rooms.csv"
+    case decodeByName roomData of
+      Left err -> putStrLn err
+      Right (_, v) -> V.forM_ v $ \ rm ->
+        putStrLn (roomId rm)
