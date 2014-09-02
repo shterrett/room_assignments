@@ -4,6 +4,7 @@ import Control.Applicative
 import qualified Data.ByteString.Lazy as BL
 import Data.Csv
 import Data.List.Split (splitOn)
+import qualified Data.Map as M
 import qualified Data.Vector as V
 import RoomAssignments
 
@@ -38,12 +39,13 @@ instance FromNamedRecord Room where
 main :: IO ()
 main = do
     eventData <- BL.readFile "./test/events.csv"
-    case decodeByName eventData of
-      Left err -> putStrLn err
-      Right (_, v) -> V.forM_ v $ \ ev ->
-        putStrLn (name ev)
     roomData <- BL.readFile "./test/rooms.csv"
-    case decodeByName roomData of
-      Left err -> putStrLn err
-      Right (_, v) -> V.forM_ v $ \ rm ->
-        putStrLn (roomId rm)
+    let eventList = case decodeByName eventData of
+                      Left _ -> []
+                      Right (_, v) -> V.toList v
+
+    let roomList = case decodeByName roomData of
+                      Left _ -> []
+                      Right (_, v) -> V.toList v
+
+    print . M.assocs $ scheduleRoomsForEvents eventList roomList
