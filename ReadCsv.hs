@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Applicative
+import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as BL
 import Data.Csv
 import Data.List.Split (splitOn)
@@ -23,7 +24,7 @@ instance FromField Time where
           otherwise -> empty
 
 splitTimeField :: Field -> [Integer]
-splitTimeField str = map (\s -> read s :: Integer) $ splitOn ":" (show str)
+splitTimeField str = map (\s -> read s :: Integer) $ splitOn ":" (BC.unpack str)
 
 instance FromField RoomType where
     parseField str
