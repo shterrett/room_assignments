@@ -37,6 +37,20 @@ instance FromNamedRecord Room where
                                   r .: "seats" <*>
                                   r .: "roomType"
 
+formatRoom :: Room -> EventList -> String -> String
+formatRoom room events text = text ++ (foldl (formatEvent room) ""  events)
+
+formatEvent :: Room -> String -> Event -> String
+formatEvent room lines event = (name event) ++
+                               "," ++ (show (startTime event)) ++
+                               "," ++ (show (endTime event)) ++
+                               "," ++ (show (attending event)) ++
+                               "," ++ (roomId room) ++
+                               "\n" ++ lines
+
+formatSchedule :: Schedule -> String
+formatSchedule s = M.foldWithKey formatRoom "Event,Start,End,Attending,Room\n" s
+
 main :: IO ()
 main = do
     eventData <- BL.readFile "./test/events.csv"
@@ -49,4 +63,4 @@ main = do
                       Left _ -> []
                       Right (_, v) -> V.toList v
 
-    print . M.assocs $ scheduleRoomsForEvents eventList roomList
+    writeFile "./test/schedule.csv" (formatSchedule $ scheduleRoomsForEvents eventList roomList)

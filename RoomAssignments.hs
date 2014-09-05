@@ -2,6 +2,7 @@ module RoomAssignments where
 
 import Data.Map as Map
 import Data.List as List
+import Text.Printf (printf)
 
 data RoomType = Standard | Science
               deriving (Eq, Show)
@@ -24,7 +25,10 @@ type Minute = Integer
 data Time = Time {
           hour   :: Hour,
           minute ::  Minute
-          } deriving (Eq, Show)
+          } deriving (Eq)
+
+instance Show Time where
+    show t = (show (hour t)) ++ ":" ++ (printf "%02d" (minute t))
 
 instance Ord Time where
     compare t1 t2
