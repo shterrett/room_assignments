@@ -1,5 +1,6 @@
 module RoomAssignments where
 
+import Data.Function (on)
 import Data.Map as Map
 import Data.List as List
 import Text.Printf (printf)
@@ -14,7 +15,7 @@ data Room = Room {
           } deriving (Eq, Show)
 
 instance Ord Room where
-    compare a b = compare (roomId a) (roomId b)
+    compare a b = (compare `on` roomId) a b
 
 type RoomList = [Room]
 
@@ -31,11 +32,9 @@ instance Show Time where
     show t = (show (hour t)) ++ ":" ++ (printf "%02d" (minute t))
 
 instance Ord Time where
-    compare t1 t2
-        | hour t1 > hour t2 = GT
-        | hour t1 < hour t2 = LT
-        | hour t1 == hour t2 = compare (minute t1) (minute t2)
-        | otherwise = LT
+    compare t1 t2 = case (compare `on` hour) t1 t2 of
+        EQ -> (compare `on` minute) t1 t2
+        ord -> ord
 
 data Event = Event {
            name         :: String,
@@ -46,11 +45,9 @@ data Event = Event {
            } deriving (Eq, Show)
 
 instance Ord Event where
-    compare e1 e2
-        | startTime e1 > startTime e2 = GT
-        | startTime e1 < startTime e2 = LT
-        | startTime e1 == startTime e2 = compare (attending e1) (attending e2)
-        | otherwise = LT
+    compare e1 e2 = case (compare `on` startTime) e1 e2 of
+                      EQ -> (compare `on` attending) e1 e2
+                      ord -> ord
 
 type EventList = [Event]
 
@@ -85,19 +82,21 @@ scheduledEvents :: Schedule -> Room -> Maybe EventList
 scheduledEvents schedule room = Map.lookup room schedule
 
 eventOverlaps :: Event -> Event -> Bool
-eventOverlaps eventOne eventTwo = beginsDuring eventOne eventTwo ||
-                                  endsDuring eventOne eventTwo ||
-                                  encompasses eventOne eventTwo
-    where beginsDuring e1 e2 = startTime e1 >= startTime e2 && startTime e1 < endTime e2
-          endsDuring e1 e2 = endTime e1 > startTime e2 && endTime e1 <= endTime e2
-          encompasses e1 e2 = startTime e1 < startTime e2 && endTime e1 > endTime e2
+eventOverlaps e1 e2 = beginsDuring || endsDuring || encompasses
+    where start1 = startTime e1
+          start2 = startTime e2
+          end1 = endTime e1
+          end2 = endTime e2
+          beginsDuring = start1 >= start2 && start1 < end2
+          endsDuring = end1 > start2 && end1 <= end2
+          encompasses = start1 < start2 && end1 > end2
 
 bestRoom :: Event -> RoomList -> Maybe Room
 bestRoom _ [] = Nothing
 bestRoom e rs = smallest $ List.filter (isCompatible e) rs
     where smallest :: [Room] -> Maybe Room
           smallest [] = Nothing
-          smallest rms = Just (List.minimumBy (\r1 r2 -> seats r1 `compare` seats r2) rms)
+          smallest rms = Just (List.minimumBy (\r1 r2 -> (compare `on` seats) r1 r2) rms)
 
 isCompatible :: Event -> Room -> Bool
 isCompatible event room = enoughSeats event room && rightType event room
