@@ -25,7 +25,7 @@ instance FromField Time where
           _ -> empty
 
 splitTimeField :: Field -> [Integer]
-splitTimeField str = map (\s -> read s :: Integer) $ splitOn ":" (BC.unpack str)
+splitTimeField = map (\s -> read s :: Integer) . splitOn ":" . BC.unpack
 
 instance FromField RoomType where
     parseField str

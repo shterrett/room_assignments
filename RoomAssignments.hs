@@ -2,6 +2,7 @@ module RoomAssignments where
 
 import Data.Function (on)
 import Data.Map as Map
+import Data.Monoid
 import Data.List as List
 import Text.Printf (printf)
 
@@ -32,9 +33,7 @@ instance Show Time where
     show t = (show (hour t)) ++ ":" ++ (printf "%02d" (minute t))
 
 instance Ord Time where
-    compare t1 t2 = case (compare `on` hour) t1 t2 of
-        EQ -> (compare `on` minute) t1 t2
-        ord -> ord
+    compare = (compare `on` hour) <> (compare `on` minute)
 
 data Event = Event {
            name         :: String,
@@ -45,9 +44,7 @@ data Event = Event {
            } deriving (Eq, Show)
 
 instance Ord Event where
-    compare e1 e2 = case (compare `on` startTime) e1 e2 of
-                      EQ -> (compare `on` attending) e1 e2
-                      ord -> ord
+    compare = (compare `on` startTime) <> (compare `on` attending)
 
 type EventList = [Event]
 
@@ -79,7 +76,7 @@ isAvailable Nothing _ = True
 isAvailable (Just elist) e = all (not . eventOverlaps e) elist
 
 scheduledEvents :: Schedule -> Room -> Maybe EventList
-scheduledEvents schedule room = Map.lookup room schedule
+scheduledEvents = flip Map.lookup
 
 eventOverlaps :: Event -> Event -> Bool
 eventOverlaps e1 e2 = beginsDuring || endsDuring || encompasses
