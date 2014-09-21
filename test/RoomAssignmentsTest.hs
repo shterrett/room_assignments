@@ -115,25 +115,25 @@ isAvailableTests =
            secondHalf = Event "shalf" ten twelve Standard 10
            fullTime = Event "full" nine twelve Standard 10
        in [ testCase "available when no scheduled events" $
-            True @=? isAvailable Nothing firstHour
+            True @=? isAvailable [] firstHour
           , testCase "available when after scheduled event" $
-            True @=? isAvailable (Just [firstHalf]) thirdHour
+            True @=? isAvailable [firstHalf] thirdHour
           , testCase "available when before scheduled event" $
-            True @=? isAvailable (Just [secondHalf]) firstHour
+            True @=? isAvailable [secondHalf] firstHour
           , testCase "available when between scheduled events" $
-            True @=? isAvailable (Just [firstHour, thirdHour]) secondHour
+            True @=? isAvailable [firstHour, thirdHour] secondHour
           , testCase "unavailable when same time as scheduled event" $
-            False @=? isAvailable (Just [firstHour, thirdHour]) firstHour
+            False @=? isAvailable [firstHour, thirdHour] firstHour
           , testCase "unavailable when contained in scheduled event" $
-            False @=? isAvailable (Just [firstHalf, thirdHour]) secondHour
+            False @=? isAvailable [firstHalf, thirdHour] secondHour
           , testCase "unavailable when totally contained by schedule event" $
-            False @=? isAvailable (Just [fullTime]) secondHour
+            False @=? isAvailable [fullTime] secondHour
           , testCase "unavailable when partially overlapping" $
-            False @=? isAvailable (Just [firstHour, thirdHour]) firstHalf
+            False @=? isAvailable [firstHour, thirdHour] firstHalf
           , testCase "unavailable when totally contains scheduled event" $
-            False @=? isAvailable (Just [secondHour]) fullTime
+            False @=? isAvailable [secondHour] fullTime
           , testCase "available if empty list" $
-            True @=? isAvailable (Just []) firstHour
+            True @=? isAvailable [] firstHour
           ]
 
 scheduledEventsTests :: [Test]
@@ -146,10 +146,10 @@ scheduledEventsTests =
            roomOne = Room "one" 15 Standard
            roomTwo = Room "two" 15 Standard
            schedule = Map.fromList [(roomOne, [eventOne, eventTwo])]
-       in [ testCase "returns Nothing if room is not in schedule" $
-            Nothing @=? scheduledEvents schedule roomTwo
+       in [ testCase "returns [] if room is not in schedule" $
+            [] @=? scheduledEvents schedule roomTwo
           , testCase "returns the list of events if room is in schedule" $
-            (Just [eventOne, eventTwo]) @=? scheduledEvents schedule roomOne
+            [eventOne, eventTwo] @=? scheduledEvents schedule roomOne
           ]
 
 scheduleEventTests :: [Test]
@@ -168,11 +168,11 @@ scheduleEventTests =
                                    ]
            testResults s r e = scheduledEvents (scheduleEvent s (Just r) e) r
        in [ testCase "adds event to existing list" $
-            (Just [eventOne, eventThree]) @=? testResults schedule roomTwo eventOne
+            [eventOne, eventThree] @=? testResults schedule roomTwo eventOne
           , testCase "adds room and event when not yet in schedule" $
-            (Just [eventTwo]) @=? testResults schedule roomThree eventTwo
+            [eventTwo] @=? testResults schedule roomThree eventTwo
           , testCase "adds event to list with multiple events" $
-            (Just [eventThree, eventOne, eventTwo]) @=? testResults schedule roomOne eventThree
+            [eventThree, eventOne, eventTwo] @=? testResults schedule roomOne eventThree
           ]
 
 bestRoomTests :: [Test]

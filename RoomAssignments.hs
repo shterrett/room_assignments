@@ -13,10 +13,13 @@ data Room = Room {
           roomId    :: String,
           seats :: Integer,
           roomType  :: RoomType
-          } deriving (Eq, Show)
+          } deriving (Show)
+
+instance Eq Room where
+    (==) a b = roomId a == roomId b
 
 instance Ord Room where
-    compare a b = (compare `on` roomId) a b
+    compare = (compare `on` roomId)
 
 type RoomList = [Room]
 
@@ -27,13 +30,10 @@ type Minute = Integer
 data Time = Time {
           hour   :: Hour,
           minute ::  Minute
-          } deriving (Eq)
+          } deriving (Eq, Ord)
 
 instance Show Time where
     show t = (show (hour t)) ++ ":" ++ (printf "%02d" (minute t))
-
-instance Ord Time where
-    compare = (compare `on` hour) <> (compare `on` minute)
 
 data Event = Event {
            name         :: String,
@@ -64,19 +64,19 @@ scheduleEvent s Nothing _ = s
 scheduleEvent schedule (Just room) event =
     let existingEvents = scheduledEvents schedule room in
       Map.insert room (addEvent event existingEvents) schedule
-      where addEvent e Nothing = [e]
-            addEvent e (Just es) = e:es
+      where addEvent e [] = [e]
+            addEvent e es = e:es
 
 availableRooms :: Schedule -> Event -> RoomList -> RoomList
 availableRooms _ _ [] = []
 availableRooms s e rs = List.filter (\r -> isAvailable (scheduledEvents s r) e) rs
 
-isAvailable :: Maybe EventList -> Event -> Bool
-isAvailable Nothing _ = True
-isAvailable (Just elist) e = all (not . eventOverlaps e) elist
+isAvailable :: EventList -> Event -> Bool
+isAvailable [] _ = True
+isAvailable elist e = all (not . eventOverlaps e) elist
 
-scheduledEvents :: Schedule -> Room -> Maybe EventList
-scheduledEvents = flip Map.lookup
+scheduledEvents :: Schedule -> Room -> EventList
+scheduledEvents s r = Map.findWithDefault [] r s
 
 eventOverlaps :: Event -> Event -> Bool
 eventOverlaps e1 e2 = beginsDuring || endsDuring || encompasses
